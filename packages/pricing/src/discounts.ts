@@ -39,7 +39,7 @@ export function lineTotal(line: PricedLine): Money {
 }
 
 function volumeTier(quantity: number) {
-  return VOLUME_TIERS.find((tier) => quantity > tier.minQuantity);
+  return VOLUME_TIERS.find((tier) => quantity >= tier.minQuantity);
 }
 
 export function volumeDiscounts(lines: readonly PricedLine[]): Discount[] {
