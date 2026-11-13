@@ -1,0 +1,13 @@
+{
+  "name": "Canada",
+  "currency": "CAD",
+  "locale": "en-CA",
+  "fxRate": 1.37,
+  "priceEnding": 99,
+  "taxRate": 0.13,
+  "taxIncluded": false,
+  "taxLabel": "HST",
+  "shippingFlat": 899,
+  "freeShippingFrom": 10000,
+  "supportEmail": "aide@northwind.example"
+}

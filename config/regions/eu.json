@@ -1,0 +1,13 @@
+{
+  "name": "France",
+  "currency": "EUR",
+  "locale": "fr-FR",
+  "fxRate": 0.92,
+  "priceEnding": 0,
+  "taxRate": 0.2,
+  "taxIncluded": true,
+  "taxLabel": "TVA",
+  "shippingFlat": 699,
+  "freeShippingFrom": 8000,
+  "supportEmail": "service@northwind.example"
+}

@@ -1,0 +1,33 @@
+{
+  "description": "Read by CodeLens to label deploy targets. Keys are GitHub environment names.",
+  "environments": {
+    "staging": {
+      "tier": "staging",
+      "region": "westus2",
+      "regionLabel": "West US 2",
+      "provider": "azure",
+      "cluster": "Storage static website"
+    },
+    "production-us": {
+      "tier": "production",
+      "region": "westus2",
+      "regionLabel": "West US 2",
+      "provider": "azure",
+      "cluster": "Storage static website"
+    },
+    "production-ca": {
+      "tier": "production",
+      "region": "canadacentral",
+      "regionLabel": "Canada Central",
+      "provider": "azure",
+      "cluster": "Storage static website"
+    },
+    "production-eu": {
+      "tier": "production",
+      "region": "francecentral",
+      "regionLabel": "France Central",
+      "provider": "azure",
+      "cluster": "Storage static website"
+    }
+  }
+}

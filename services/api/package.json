@@ -1,0 +1,14 @@
+{
+  "name": "@northwind/api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Orders API: products, quotes and orders over HTTP, stored in SQLite.",
+  "type": "module",
+  "dependencies": {
+    "@northwind/catalog": "*",
+    "@northwind/checkout": "*",
+    "@northwind/config": "*",
+    "@northwind/money": "*",
+    "@northwind/pricing": "*"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "@northwind/config",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Loads and validates per-region storefront configuration.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@northwind/money": "*"
+  }
+}

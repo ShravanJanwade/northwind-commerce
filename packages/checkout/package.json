@@ -1,0 +1,17 @@
+{
+  "name": "@northwind/checkout",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Turns a cart into a priced quote: lines, discounts, shipping, tax and total.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@northwind/catalog": "*",
+    "@northwind/config": "*",
+    "@northwind/money": "*",
+    "@northwind/pricing": "*",
+    "@northwind/tax": "*"
+  }
+}

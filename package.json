@@ -1,0 +1,34 @@
+{
+  "name": "northwind-commerce",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Northwind's regional storefronts: catalog, pricing, tax and checkout packages, an orders API, and a static storefront deployed to three Azure regions.",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "services/*"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:unit": "vitest run --project unit",
+    "test:integration": "vitest run --project integration",
+    "build": "node services/storefront/src/cli.ts --all --out dist",
+    "build:region": "node services/storefront/src/cli.ts --out dist --region",
+    "start:api": "node services/api/src/main.ts",
+    "smoke": "node scripts/smoke.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.0.0",
+    "eslint": "^10.14.0",
+    "globals": "^17.14.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.72.2",
+    "vitest": "^4.1.12"
+  }
+}

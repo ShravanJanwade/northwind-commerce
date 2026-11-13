@@ -1,0 +1,100 @@
+name: CI
+
+# Every branch except main; the Deploy workflow verifies main before it ships.
+on:
+  push:
+    branches-ignore: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run test:unit
+
+  integration-tests:
+    name: Integration tests
+    needs: typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run test:integration
+      - name: Start the API and wait for it
+        run: |
+          PORT=3000 DATABASE_PATH="$RUNNER_TEMP/orders.db" npm run start:api > "$RUNNER_TEMP/api.log" 2>&1 &
+          until curl --silent --fail http://localhost:3000/api/health > /dev/null; do sleep 1; done
+      - name: Place an order against the running API
+        run: |
+          curl --silent --show-error --fail -X POST http://localhost:3000/api/orders \
+            -H 'content-type: application/json' \
+            -d '{"region":"us","email":"ci@example.com","items":[{"sku":"NW-COF-001","quantity":2}]}'
+      - name: API log
+        if: always()
+        run: cat "$RUNNER_TEMP/api.log" || true
+
+  build:
+    name: Build storefronts
+    needs: [typecheck, unit-tests]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: storefronts-${{ github.sha }}
+          path: dist
+          retention-days: 3

@@ -1,0 +1,13 @@
+{
+  "name": "@northwind/storefront",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Renders each region's static storefront: product pages, a JSON catalog and a version stamp.",
+  "type": "module",
+  "dependencies": {
+    "@northwind/catalog": "*",
+    "@northwind/config": "*",
+    "@northwind/money": "*",
+    "@northwind/pricing": "*"
+  }
+}

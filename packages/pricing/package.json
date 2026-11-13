@@ -1,0 +1,15 @@
+{
+  "name": "@northwind/pricing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Regional prices, volume and bundle discounts, and coupon campaigns.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@northwind/catalog": "*",
+    "@northwind/config": "*",
+    "@northwind/money": "*"
+  }
+}

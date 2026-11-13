@@ -1,0 +1,14 @@
+{
+  "name": "@northwind/tax",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sales tax added at checkout, or VAT extracted from tax-inclusive prices.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@northwind/config": "*",
+    "@northwind/money": "*"
+  }
+}

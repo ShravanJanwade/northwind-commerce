@@ -1,0 +1,13 @@
+{
+  "name": "United States",
+  "currency": "USD",
+  "locale": "en-US",
+  "fxRate": 1,
+  "priceEnding": 99,
+  "taxRate": 0.0725,
+  "taxIncluded": false,
+  "taxLabel": "Sales tax",
+  "shippingFlat": 599,
+  "freeShippingFrom": 7500,
+  "supportEmail": "help@northwind.example"
+}

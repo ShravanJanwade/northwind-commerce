@@ -1,0 +1,42 @@
+name: Publish storefront
+description: Builds one region's storefront, uploads it to that region's static website and smoke-tests it.
+
+inputs:
+  region:
+    description: Region code (us, ca or eu).
+    required: true
+  storage-account:
+    description: The region's storage account.
+    required: true
+
+outputs:
+  url:
+    description: The region's public address.
+    value: ${{ steps.upload.outputs.url }}
+
+runs:
+  using: composite
+  steps:
+    # Region configuration is validated here, so a mistake in one region's
+    # file stops that region and no other.
+    - name: Build the ${{ inputs.region }} storefront
+      shell: bash
+      run: npm run build:region -- "${{ inputs.region }}"
+
+    - name: Upload to Azure Storage
+      id: upload
+      shell: bash
+      env:
+        ACCOUNT: ${{ inputs.storage-account }}
+        REGION: ${{ inputs.region }}
+      run: |
+        az storage blob upload-batch \
+          --account-name "$ACCOUNT" --destination '$web' --source "dist/$REGION" \
+          --overwrite --auth-mode key --only-show-errors --output none
+        url="$(az storage account show --name "$ACCOUNT" --query primaryEndpoints.web --output tsv)"
+        echo "url=$url" >> "$GITHUB_OUTPUT"
+        echo "Published $REGION to $url"
+
+    - name: Smoke test
+      shell: bash
+      run: npm run smoke -- "${{ steps.upload.outputs.url }}" "$GITHUB_SHA"

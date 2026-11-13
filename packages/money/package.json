@@ -1,0 +1,10 @@
+{
+  "name": "@northwind/money",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Integer-cent money arithmetic, currency conversion and formatting.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}
