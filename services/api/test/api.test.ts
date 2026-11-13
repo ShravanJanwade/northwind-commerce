@@ -51,6 +51,13 @@ describe('orders API', () => {
     expect(body.products[0]!.price.formatted.replace(/\s/g, ' ')).toBe('13,79 €');
   });
 
+  it('searches in-stock products by name and description', async () => {
+    const response = await fetch(`${base}/api/search?q=green&region=ca`);
+    const body = await json<{ results: { sku: string }[] }>(response);
+    expect(body.results.map((r) => r.sku)).toEqual(['NW-TEA-002']);
+    expect((await fetch(`${base}/api/search?q=g`)).status).toBe(400);
+  });
+
   it('returns 404 for an unknown product and route', async () => {
     expect((await fetch(`${base}/api/products/NW-NOPE`)).status).toBe(404);
     expect((await fetch(`${base}/api/nothing`)).status).toBe(404);

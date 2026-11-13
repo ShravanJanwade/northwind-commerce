@@ -79,6 +79,12 @@ export function buildRouter({ db, regions, commit }: AppOptions): Router {
       const products = listProducts({ category, search: query.get('q') ?? undefined });
       return { region: region.region, currency: region.currency, products: products.map((p) => productView(p, region)) };
     })
+    .on('GET', '/api/search', ({ query }) => {
+      const term = (query.get('q') ?? '').trim();
+      if (term.length < 2) throw new HttpError(400, 'Search for at least two characters');
+      const region = regionFrom(query.get('region'));
+      return { query: term, results: listProducts({ search: term, inStockOnly: true }).map((p) => productView(p, region)) };
+    })
     .on('GET', '/api/products/:sku', ({ params, query }) => {
       const product = getProduct(params.sku ?? '');
       if (!product) throw new HttpError(404, `No product ${params.sku}`);
