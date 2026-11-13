@@ -81,7 +81,9 @@ curl -X POST http://localhost:8080/api/quote -H 'content-type: application/json'
 curl -X POST http://localhost:8080/api/orders -H 'content-type: application/json' -d '{"region":"ca","email":"ada@example.com","items":[{"sku":"NW-COF-002","quantity":2}]}'
 ```
 
-Prices are integer minor units (cents); every money value carries its currency.
+Prices are integer minor units (cents); every money value carries its currency. `WELCOME10` is a standing
+10% promotion; campaign codes are five characters from an alphabet without
+look-alike letters and digits.
 
 ## Deploying your own copy
 
