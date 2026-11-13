@@ -2,7 +2,8 @@ import { loadAllRegions } from '@northwind/config';
 import { migrate, openDatabase } from './db.ts';
 import { createApiServer } from './server.ts';
 
-const port = Number(process.env.PORT ?? 8080);
+// API_PORT rather than PORT: hosts that set PORT expect their own proxy on it.
+const port = Number(process.env.API_PORT ?? 8080);
 const databasePath = process.env.DATABASE_PATH ?? ':memory:';
 
 const db = openDatabase(databasePath);
