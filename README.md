@@ -73,6 +73,16 @@ npm run build            # storefronts for every region, into dist/
 npm run start:api        # orders API on http://localhost:8080
 ```
 
+## Calling the orders API
+
+```sh
+curl 'http://localhost:8080/api/products?region=eu&category=coffee'
+curl -X POST http://localhost:8080/api/quote -H 'content-type: application/json' -d '{"region":"us","items":[{"sku":"NW-MUG-001","quantity":3}],"couponCode":"WELCOME10"}'
+curl -X POST http://localhost:8080/api/orders -H 'content-type: application/json' -d '{"region":"ca","email":"ada@example.com","items":[{"sku":"NW-COF-002","quantity":2}]}'
+```
+
+Prices are integer minor units (cents); every money value carries its currency.
+
 ## Deploying your own copy
 
 `deploy/azure-setup.sh` creates the four storage accounts, trusts this
