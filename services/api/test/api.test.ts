@@ -100,7 +100,12 @@ describe('orders API', () => {
 describe('migrations', () => {
   it('apply once and record what ran', () => {
     const db = openDatabase(':memory:');
-    expect(migrate(db)).toEqual(['0001_create_orders.sql', '0002_create_order_lines.sql', '0003_add_gift_message.sql']);
+    expect(migrate(db)).toEqual([
+      '0001_create_orders.sql',
+      '0002_create_order_lines.sql',
+      '0003_add_gift_message.sql',
+      '0004_add_delivery_notes.sql',
+    ]);
     expect(migrate(db)).toEqual([]);
   });
 });
