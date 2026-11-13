@@ -7,6 +7,7 @@ const databasePath = process.env.DATABASE_PATH ?? ':memory:';
 
 const db = openDatabase(databasePath);
 const applied = migrate(db);
+console.log(`Database: ${databasePath === ':memory:' ? 'in memory (data is lost on exit)' : databasePath}`);
 if (applied.length) console.log(`Applied migrations: ${applied.join(', ')}`);
 
 const server = createApiServer({ db, regions: loadAllRegions(), commit: process.env.GIT_COMMIT ?? 'dev' });
