@@ -14,6 +14,7 @@ export interface StoredOrder {
   taxIncluded: boolean;
   total: number;
   createdAt: string;
+  giftMessage: string | null;
   lines: { sku: string; name: string; quantity: number; unitPrice: number; lineTotal: number }[];
 }
 
@@ -29,6 +30,7 @@ interface OrderRow {
   tax_included: number;
   total: number;
   created_at: string;
+  gift_message: string | null;
 }
 
 interface LineRow {
@@ -39,14 +41,14 @@ interface LineRow {
   line_total: number;
 }
 
-export function saveOrder(db: DatabaseSync, quote: Quote, email: string): StoredOrder {
+export function saveOrder(db: DatabaseSync, quote: Quote, email: string, giftMessage: string | null = null): StoredOrder {
   const id = randomUUID();
   const createdAt = new Date().toISOString();
   db.exec('BEGIN');
   try {
     db.prepare(
-      `INSERT INTO orders (id, region, currency, email, subtotal, discount_total, shipping, tax, tax_included, total, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO orders (id, region, currency, email, subtotal, discount_total, shipping, tax, tax_included, total, created_at, gift_message)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).run(
       id,
       quote.region,
@@ -59,6 +61,7 @@ export function saveOrder(db: DatabaseSync, quote: Quote, email: string): Stored
       quote.tax.included ? 1 : 0,
       quote.total.amount,
       createdAt,
+      giftMessage,
     );
     const insertLine = db.prepare(
       'INSERT INTO order_lines (order_id, sku, name, quantity, unit_price, line_total) VALUES (?, ?, ?, ?, ?, ?)',
@@ -92,6 +95,7 @@ export function findOrder(db: DatabaseSync, id: string): StoredOrder | null {
     taxIncluded: order.tax_included === 1,
     total: order.total,
     createdAt: order.created_at,
+    giftMessage: order.gift_message,
     lines: lines.map((line) => ({
       sku: line.sku,
       name: line.name,

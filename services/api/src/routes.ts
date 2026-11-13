@@ -92,8 +92,10 @@ export function buildRouter({ db, regions, commit }: AppOptions): Router {
       const body = (await readJson(req)) as Record<string, unknown>;
       const email = typeof body.email === 'string' ? body.email.trim() : '';
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new HttpError(400, 'A valid email is required');
+      const giftMessage = body.giftMessage === undefined ? null : String(body.giftMessage).trim();
+      if (giftMessage !== null && giftMessage.length > 200) throw new HttpError(400, 'Gift messages are limited to 200 characters');
       const priced = withCheckoutErrors(() => quote(parseCart(body), regionFrom(body.region), couponFrom(body)));
-      const order = saveOrder(db, priced, email);
+      const order = saveOrder(db, priced, email, giftMessage || null);
       sendJson(res, 201, { id: order.id, total: order.total, currency: order.currency });
     })
     .on('GET', '/api/orders/:id', ({ params }) => {

@@ -26,6 +26,7 @@ interface QuoteBody {
   discounts: { code: string }[];
 }
 interface OrderBody {
+  giftMessage: string | null;
   lines: { sku: string }[];
   subtotal: number;
   discountTotal: number;
@@ -71,6 +72,7 @@ describe('orders API', () => {
     const created = await post('/api/orders', {
       region: 'ca',
       email: 'ada@example.com',
+      giftMessage: 'Happy birthday, Grace!',
       items: [
         { sku: 'NW-COF-002', quantity: 2 },
         { sku: 'NW-BRW-001', quantity: 1 },
@@ -82,6 +84,7 @@ describe('orders API', () => {
 
     const order = await json<OrderBody>(await fetch(`${base}/api/orders/${id}`));
     expect(order.lines.map((l) => l.sku)).toEqual(['NW-BRW-001', 'NW-COF-002']);
+    expect(order.giftMessage).toBe('Happy birthday, Grace!');
     expect(order.total).toBeGreaterThan(order.subtotal - order.discountTotal);
   });
 
@@ -97,7 +100,7 @@ describe('orders API', () => {
 describe('migrations', () => {
   it('apply once and record what ran', () => {
     const db = openDatabase(':memory:');
-    expect(migrate(db)).toEqual(['0001_create_orders.sql', '0002_create_order_lines.sql']);
+    expect(migrate(db)).toEqual(['0001_create_orders.sql', '0002_create_order_lines.sql', '0003_add_gift_message.sql']);
     expect(migrate(db)).toEqual([]);
   });
 });
