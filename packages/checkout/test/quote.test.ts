@@ -78,4 +78,8 @@ describe('amountToFreeShipping', () => {
     expect(amountToFreeShipping({ amount: 6000, currency: 'USD' }, us).amount).toBe(1500);
     expect(amountToFreeShipping({ amount: 9000, currency: 'USD' }, us).amount).toBe(0);
   });
+
+  it('works in the region's own currency', () => {
+    expect(amountToFreeShipping({ amount: 7999, currency: 'EUR' }, eu)).toEqual({ amount: 1, currency: 'EUR' });
+  });
 });
