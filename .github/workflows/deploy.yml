@@ -75,6 +75,7 @@ jobs:
         uses: ./.github/actions/publish-storefront
         with:
           region: us
+          environment: staging
           storage-account: ${{ vars.STORAGE_STAGING }}
 
   deploy-us:
@@ -103,6 +104,7 @@ jobs:
         uses: ./.github/actions/publish-storefront
         with:
           region: us
+          environment: production-us
           storage-account: ${{ vars.STORAGE_US }}
 
   deploy-ca:
@@ -131,6 +133,7 @@ jobs:
         uses: ./.github/actions/publish-storefront
         with:
           region: ca
+          environment: production-ca
           storage-account: ${{ vars.STORAGE_CA }}
 
   deploy-eu:
@@ -159,6 +162,7 @@ jobs:
         uses: ./.github/actions/publish-storefront
         with:
           region: eu
+          environment: production-eu
           storage-account: ${{ vars.STORAGE_EU }}
 
   verify-production:

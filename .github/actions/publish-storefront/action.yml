@@ -5,6 +5,9 @@ inputs:
   region:
     description: Region code (us, ca or eu).
     required: true
+  environment:
+    description: Deployment environment; selects config/deploy/<environment>.json.
+    required: true
   storage-account:
     description: The region's storage account.
     required: true
@@ -17,8 +20,13 @@ outputs:
 runs:
   using: composite
   steps:
-    # Region configuration is validated here, so a mistake in one region's
-    # file stops that region and no other.
+    # Both files are validated here, so a mistake in one region's or one
+    # environment's configuration stops that deploy and no other.
+    - name: Read deploy settings for ${{ inputs.environment }}
+      id: settings
+      shell: bash
+      run: node scripts/deploy-settings.ts "${{ inputs.environment }}"
+
     - name: Build the ${{ inputs.region }} storefront
       shell: bash
       run: npm run build:region -- "${{ inputs.region }}"
@@ -29,9 +37,17 @@ runs:
       env:
         ACCOUNT: ${{ inputs.storage-account }}
         REGION: ${{ inputs.region }}
+        HTML_CACHE: ${{ steps.settings.outputs.htmlCacheSeconds }}
+        ASSET_CACHE: ${{ steps.settings.outputs.assetCacheSeconds }}
       run: |
         az storage blob upload-batch \
           --account-name "$ACCOUNT" --destination '$web' --source "dist/$REGION" \
+          --content-cache-control "public, max-age=$HTML_CACHE" \
+          --overwrite --auth-mode key --only-show-errors --output none
+        # Assets again, with their long lifetime.
+        az storage blob upload-batch \
+          --account-name "$ACCOUNT" --destination '$web' --source "dist/$REGION" --pattern 'assets/*' \
+          --content-cache-control "public, max-age=$ASSET_CACHE" \
           --overwrite --auth-mode key --only-show-errors --output none
         url="$(az storage account show --name "$ACCOUNT" --query primaryEndpoints.web --output tsv)"
         echo "url=$url" >> "$GITHUB_OUTPUT"
