@@ -22,6 +22,12 @@ describe('applyDiscounts', () => {
     expect(result.net.amount).toBe(4797 - 480);
   });
 
+  it('gives fifteen percent off a line of six or more', () => {
+    const result = applyDiscounts([line('NW-MUG-001', 'mugs', 1599, 6)], 'USD');
+    expect(result.discounts[0]?.label).toBe('15% off 6 × NW-MUG-001');
+    expect(result.discountTotal.amount).toBe(1439);
+  });
+
   it('discounts coffee bought with a brewer', () => {
     const result = applyDiscounts([line('NW-BRW-001', 'brewing', 2499), line('NW-COF-002', 'coffee', 1899, 2)], 'USD');
     expect(result.discounts).toHaveLength(1);

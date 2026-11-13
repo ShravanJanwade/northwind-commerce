@@ -24,7 +24,11 @@ export interface Coupon {
   minimumSpend: number;
 }
 
-/** Three or more of the same item: ten percent off that line. */
+/** Volume tiers, largest first: six or more of an item is 15% off, three or more 10%. */
+export const VOLUME_TIERS = [
+  { minQuantity: 6, rate: 0.15 },
+  { minQuantity: 3, rate: 0.1 },
+] as const;
 export const VOLUME_MIN_QUANTITY = 3;
 export const VOLUME_RATE = 0.1;
 /** A brewer and a coffee in the same order: five percent off the coffee. */
@@ -34,14 +38,22 @@ export function lineTotal(line: PricedLine): Money {
   return multiply(line.unitPrice, line.quantity);
 }
 
+function volumeTier(quantity: number) {
+  return VOLUME_TIERS.find((tier) => quantity > tier.minQuantity);
+}
+
 export function volumeDiscounts(lines: readonly PricedLine[]): Discount[] {
-  return lines
-    .filter((line) => line.quantity >= VOLUME_MIN_QUANTITY)
-    .map((line) => ({
-      code: `volume:${line.sku}`,
-      label: `${Math.round(VOLUME_RATE * 100)}% off ${line.quantity} × ${line.name}`,
-      amount: percentOf(lineTotal(line), VOLUME_RATE),
-    }));
+  return lines.flatMap((line) => {
+    const tier = volumeTier(line.quantity);
+    if (!tier) return [];
+    return [
+      {
+        code: `volume:${line.sku}`,
+        label: `${Math.round(tier.rate * 100)}% off ${line.quantity} × ${line.name}`,
+        amount: percentOf(lineTotal(line), tier.rate),
+      },
+    ];
+  });
 }
 
 export function brewKitDiscount(lines: readonly PricedLine[], currency: Currency): Discount | null {
