@@ -69,7 +69,7 @@ jobs:
       - run: npm run test:integration
       - name: Start the API and wait for it
         run: |
-          PORT=3000 DATABASE_PATH="$RUNNER_TEMP/orders.db" npm run start:api > "$RUNNER_TEMP/api.log" 2>&1 &
+          API_PORT=3000 DATABASE_PATH="$RUNNER_TEMP/orders.db" npm run start:api > "$RUNNER_TEMP/api.log" 2>&1 &
           until curl --silent --fail http://localhost:3000/api/health > /dev/null; do sleep 1; done
       - name: Place an order against the running API
         run: |
