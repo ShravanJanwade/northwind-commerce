@@ -70,18 +70,33 @@ for target in staging us ca eu; do
 done
 
 say "Trusting $REPO's deployment environments"
+# GitHub names the repository in its sign-in tokens as owner/name, or, for
+# repositories created since it switched to immutable identifiers, as
+# owner@<owner id>/name@<repository id>. Trust both, so the deploy signs in
+# whichever this repository uses.
+read -r gh_owner gh_owner_id gh_name gh_repo_id < <(curl -fsS "https://api.github.com/repos/${REPO}" |
+  python3 -c 'import json,sys; r=json.load(sys.stdin); print(r["owner"]["login"], r["owner"]["id"], r["name"], r["id"])') ||
+  die "Could not read ${REPO} from the GitHub API."
 for environment in staging production-us production-ca production-eu; do
-  name="northwind-${environment}"
-  if az identity federated-credential show --identity-name "$IDENTITY" --resource-group "$RESOURCE_GROUP" \
-    --name "$name" --output none 2>/dev/null; then
-    echo "$name already trusted"
-  else
-    # One at a time: Azure rejects concurrent changes to an identity's credentials.
-    az identity federated-credential create --identity-name "$IDENTITY" --resource-group "$RESOURCE_GROUP" \
-      --name "$name" --issuer https://token.actions.githubusercontent.com \
-      --subject "repo:${REPO}:environment:${environment}" --audiences api://AzureADTokenExchange --output none
-    echo "$name trusted"
-  fi
+  for form in names ids; do
+    if [ "$form" = names ]; then
+      name="northwind-${environment}"
+      subject="repo:${REPO}:environment:${environment}"
+    else
+      name="northwind-${environment}-ids"
+      subject="repo:${gh_owner}@${gh_owner_id}/${gh_name}@${gh_repo_id}:environment:${environment}"
+    fi
+    if az identity federated-credential show --identity-name "$IDENTITY" --resource-group "$RESOURCE_GROUP" \
+      --name "$name" --output none 2>/dev/null; then
+      echo "$name already trusted"
+    else
+      # One at a time: Azure rejects concurrent changes to an identity's credentials.
+      az identity federated-credential create --identity-name "$IDENTITY" --resource-group "$RESOURCE_GROUP" \
+        --name "$name" --issuer https://token.actions.githubusercontent.com \
+        --subject "$subject" --audiences api://AzureADTokenExchange --output none
+      echo "$name trusted ($subject)"
+    fi
+  done
 done
 
 declare -A VARIABLES=(
