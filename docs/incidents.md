@@ -15,7 +15,7 @@ diffs and the run history alone. Each incident says what it concluded on
 | [Deploy #5][d5] | Azure refused the deploy's sign-in | Secret expiry, 53% | Yes |
 | [CI #18][c18] | Syntax error in a test file | Code regression, 46% | Yes |
 | [CI #8][c8] | Migration adds a column that exists | Migration failure, 52% | Yes |
-| [CI #7][c7] | New volume tier broke the old one | Code regression, 64% | Yes |
+| [CI #7][c7] | New volume tier broke the old one | Code regression, 92% | Yes |
 | [CI #6][c6] | Tests wait for the API on the wrong port | Timeout, 48% | Yes |
 | [CI #5][c5] | npm can't install the Airbnb rules | Dependency drift, 61% | Yes |
 | [Deploy #4][d4], [CI #10][c10], [Deploy #1][d1] | Flaky coupon test | Code regression or dependency drift | No |
@@ -99,8 +99,9 @@ before it had failed often enough for CodeLens to know it was flaky.
   `quantity > tier.minQuantity`. A line had to exceed a threshold rather than meet
   it, so exactly three items lost their 10% and exactly six got 10% instead of 15%.
 - **Fix:** [10815f9][10815f9] compares with `>=`. [CI #11][c11] passed.
-- **CodeLens:** Code regression, 64%, blaming 13013c5: fix forward, nothing has
-  shipped.
+- **CodeLens:** Code regression, 92%, blaming 13013c5. All five tests were failing
+  for the first time, next to the code the commit changed, on a branch that was
+  green before it. Fix forward: nothing has shipped.
 
 ## CI #6: integration tests wait for the API on the wrong port
 
@@ -149,8 +150,10 @@ Since 2026-11-13 · left in on purpose
 - **CodeLens:** missed in the first three. CodeLens calls a test flaky only once it
   has failed on three branches across at least eight runs, and these were its
   first, second and third failures, on two branches. Without that history it read
-  them as other causes: a dependency change where the commit included
-  `package-lock.json`, or a regression. For [Deploy #4][d4] it recommended
+  them as other causes. [Deploy #1][d1], the first failure, reads as a regression,
+  which is fair for a test that had never failed, but it recommends reverting the
+  repository's first commit. [CI #10][c10] reads as a dependency change, because
+  its commit changed `package-lock.json`. For [Deploy #4][d4] it recommends
   reverting 0ed711c, a commit that changed nothing but `.codelens.json`. The fourth
   failure, in CI #18, came with a real syntax error of its own. The test has now
   failed on three branches in 28 runs, so CodeLens should call its next failure a
