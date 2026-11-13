@@ -1,7 +1,7 @@
 import { CATEGORIES, type Product } from '@northwind/catalog';
 import type { RegionConfig } from '@northwind/config';
 import { formatMoney } from '@northwind/money';
-import { regionalPrice } from '@northwind/pricing';
+import { regionalPrice, VOLUME_MIN_QUANTITY, VOLUME_RATE } from '@northwind/pricing';
 
 export interface Release {
   commit: string;
@@ -76,6 +76,7 @@ export function renderProduct(product: Product, region: RegionConfig, release: R
   const body = `<h1>${escapeHtml(product.name)}</h1>
 <p class="muted">${escapeHtml(product.description)}</p>
 <p class="price">${product.stock > 0 ? escapeHtml(price) : 'Sold out'}</p>
+<p class="muted">Buy ${VOLUME_MIN_QUANTITY} or more and save ${Math.round(VOLUME_RATE * 100)}%.</p>
 <p class="muted">SKU ${escapeHtml(product.sku)} · ${product.weightGrams} g shipped</p>
 <p><a href="../index.html">Back to the shop</a></p>`;
   return layout(region, release, product.name, body, '../');

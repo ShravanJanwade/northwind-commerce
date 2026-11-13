@@ -55,6 +55,7 @@ describe('storefront rendering', () => {
     const html = renderProduct(product, eu, release);
     expect(html).not.toContain('<script>');
     expect(html).toContain('Sold out');
+    expect(html).toContain('Buy 3 or more and save 10%.');
   });
 });
 
