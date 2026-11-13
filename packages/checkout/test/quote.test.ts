@@ -1,6 +1,6 @@
 import type { RegionConfig } from '@northwind/config';
 import { describe, expect, it } from 'vitest';
-import { CheckoutError, quote } from '../src/index.ts';
+import { amountToFreeShipping, CheckoutError, quote } from '../src/index.ts';
 
 const us: RegionConfig = {
   region: 'us',
@@ -70,5 +70,12 @@ describe('quote', () => {
     expect(() => quote([{ sku: 'NW-TEA-003', quantity: 1 }], us)).toThrow(/Only 0 of Rooibos/);
     expect(() => quote([{ sku: 'NW-MUG-001', quantity: 0 }], us)).toThrow(/whole number/);
     expect(() => quote([{ sku: 'NOPE', quantity: 1 }], us)).toThrow(/Unknown product/);
+  });
+});
+
+describe('amountToFreeShipping', () => {
+  it('counts down to the threshold and stops at zero', () => {
+    expect(amountToFreeShipping({ amount: 6000, currency: 'USD' }, us).amount).toBe(1500);
+    expect(amountToFreeShipping({ amount: 9000, currency: 'USD' }, us).amount).toBe(0);
   });
 });
