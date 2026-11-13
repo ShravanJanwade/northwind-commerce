@@ -5,7 +5,7 @@
 // storefront configuration, and only a deploy reads them.
 import { appendFileSync, readFileSync } from 'node:fs';
 
-const REQUIRED = ['htmlCacheSeconds', 'assetCacheSeconds'] as const;
+const REQUIRED = ['htmlCacheSeconds', 'assetCacheSeconds', 'catalogCacheSeconds'] as const;
 
 class ConfigurationError extends Error {
   constructor(message: string) {

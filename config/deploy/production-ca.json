@@ -1,4 +1,5 @@
 {
   "htmlCacheSeconds": 60,
-  "assetCacheSeconds": 86400
+  "assetCacheSeconds": 86400,
+  "catalogCacheSeconds": 300
 }

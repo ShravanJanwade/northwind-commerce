@@ -39,6 +39,7 @@ runs:
         REGION: ${{ inputs.region }}
         HTML_CACHE: ${{ steps.settings.outputs.htmlCacheSeconds }}
         ASSET_CACHE: ${{ steps.settings.outputs.assetCacheSeconds }}
+        CATALOG_CACHE: ${{ steps.settings.outputs.catalogCacheSeconds }}
       run: |
         az storage blob upload-batch \
           --account-name "$ACCOUNT" --destination '$web' --source "dist/$REGION" \
@@ -48,6 +49,11 @@ runs:
         az storage blob upload-batch \
           --account-name "$ACCOUNT" --destination '$web' --source "dist/$REGION" --pattern 'assets/*' \
           --content-cache-control "public, max-age=$ASSET_CACHE" \
+          --overwrite --auth-mode key --only-show-errors --output none
+        # The JSON catalog changes with every price update, so it gets its own.
+        az storage blob upload-batch \
+          --account-name "$ACCOUNT" --destination '$web' --source "dist/$REGION" --pattern 'api/*' \
+          --content-cache-control "public, max-age=$CATALOG_CACHE" \
           --overwrite --auth-mode key --only-show-errors --output none
         url="$(az storage account show --name "$ACCOUNT" --query primaryEndpoints.web --output tsv)"
         echo "url=$url" >> "$GITHUB_OUTPUT"
