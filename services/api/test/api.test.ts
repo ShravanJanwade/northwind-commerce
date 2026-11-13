@@ -53,8 +53,9 @@ describe('orders API', () => {
 
   it('searches in-stock products by name and description', async () => {
     const response = await fetch(`${base}/api/search?q=green&region=ca`);
-    const body = await json<{ results: { sku: string }[] }>(response);
+    const body = await json<{ total: number; results: { sku: string }[] }>(response);
     expect(body.results.map((r) => r.sku)).toEqual(['NW-TEA-002']);
+    expect(body.total).toBe(1);
     expect((await fetch(`${base}/api/search?q=g`)).status).toBe(400);
   });
 
