@@ -31,7 +31,7 @@ for the code itself; `npm run build` renders the storefronts.
 | Workflow | Runs on | Stages |
 | --- | --- | --- |
 | [CI](.github/workflows/ci.yml) | every branch except `main` | lint · typecheck · unit tests → integration tests (in-process, then the real server) → build storefronts |
-| [Deploy](.github/workflows/deploy.yml) | `main` | lint, typecheck and unit tests → integration tests → staging → production-us, production-ca, production-eu in parallel → verify production |
+| [Deploy](.github/workflows/deploy.yml) | `main`, or by hand for one environment | lint, typecheck and unit tests → integration tests → staging → bake in staging → production-us, production-ca, production-eu in parallel, each behind an approval → verify production |
 | [Nightly](.github/workflows/nightly.yml) | 07:17 UTC daily | full test suite on `main`, then a smoke check of every production region |
 
 Deploys sign in to Azure with OpenID Connect: no Azure password or key is stored
@@ -47,6 +47,22 @@ other.
 | `production-eu` | France Central | Storage static website |
 
 `.codelens.json` tells CodeLens which Azure region each GitHub environment is in.
+
+## Releases, bake time and rollbacks
+
+- **Bake.** A release runs in staging for `bakeMinutes` (3, in
+  `config/deploy/staging.json`) before production gets it. During that time
+  `scripts/bake.ts` checks staging every 30 seconds; two failed checks in a row
+  stop the release.
+- **Approval.** Each production environment can require a reviewer, so a baked
+  release waits until someone approves it. `deploy/github-environments.sh` sets
+  that up once (`REVIEWERS=none` removes it). Approve or reject in CodeLens or
+  on GitHub.
+- **Rollback.** Run Deploy by hand with a `target` environment and the `ref` of
+  a commit that deployed there before. It redeploys only that environment, skips
+  the tests and the bake, and still waits at the approval. CodeLens offers this
+  as "Roll back" on each environment and names the run
+  `Deploy <target> at <commit>`.
 
 ## Failures you will find in the history
 

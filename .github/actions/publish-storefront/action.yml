@@ -16,6 +16,9 @@ outputs:
   url:
     description: The region's public address.
     value: ${{ steps.upload.outputs.url }}
+  bake-minutes:
+    description: How long a release bakes in this environment before production (its bakeMinutes setting).
+    value: ${{ steps.settings.outputs.bakeMinutes }}
 
 runs:
   using: composite
@@ -59,6 +62,9 @@ runs:
         echo "url=$url" >> "$GITHUB_OUTPUT"
         echo "Published $REGION to $url"
 
+    # DEPLOY_SHA is the commit a redeploy ships; a normal release ships its own.
     - name: Smoke test
       shell: bash
-      run: npm run smoke -- "${{ steps.upload.outputs.url }}" "$GITHUB_SHA"
+      env:
+        URL: ${{ steps.upload.outputs.url }}
+      run: npm run smoke -- "$URL" "${DEPLOY_SHA:-$GITHUB_SHA}"

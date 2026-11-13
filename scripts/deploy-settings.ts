@@ -6,6 +6,8 @@
 import { appendFileSync, readFileSync } from 'node:fs';
 
 const REQUIRED = ['htmlCacheSeconds', 'assetCacheSeconds', 'catalogCacheSeconds'] as const;
+// Minutes a release spends in this environment before production gets it.
+const OPTIONAL = ['bakeMinutes'] as const;
 
 class ConfigurationError extends Error {
   constructor(message: string) {
@@ -34,6 +36,14 @@ try {
     if (value === undefined) throw new ConfigurationError(`${environment} is missing deploy setting "${key}"`);
     if (!Number.isInteger(value) || (value as number) < 0) {
       throw new ConfigurationError(`${environment} deploy setting "${key}" must be a whole number of seconds`);
+    }
+    lines.push(`${key}=${value}`);
+  }
+  for (const key of OPTIONAL) {
+    const value = settings[key];
+    if (value === undefined) continue;
+    if (!Number.isInteger(value) || (value as number) < 0) {
+      throw new ConfigurationError(`${environment} deploy setting "${key}" must be a whole number`);
     }
     lines.push(`${key}=${value}`);
   }

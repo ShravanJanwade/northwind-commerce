@@ -1,5 +1,6 @@
 {
   "htmlCacheSeconds": 0,
   "assetCacheSeconds": 86400,
-  "catalogCacheSeconds": 0
+  "catalogCacheSeconds": 0,
+  "bakeMinutes": 3
 }

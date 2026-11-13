@@ -19,7 +19,8 @@ if (regions.length === 0) {
 }
 
 const release = {
-  commit: process.env.GITHUB_SHA ?? process.env.GIT_COMMIT ?? 'local',
+  // A redeploy ships an earlier commit than the run's own (DEPLOY_SHA).
+  commit: process.env.DEPLOY_SHA || process.env.GITHUB_SHA || process.env.GIT_COMMIT || 'local',
   builtAt: new Date().toISOString(),
 };
 

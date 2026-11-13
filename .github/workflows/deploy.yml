@@ -1,13 +1,31 @@
 name: Deploy
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Deploy {0} at {1}', inputs.target, inputs.ref || github.sha) || '' }}
 
-# main → verify → staging → three production regions in parallel → verify.
-# Each region is an Azure Storage static website in its own Azure region.
+# A release: main → tests → staging → bake in staging → the three production
+# regions in parallel, each behind its environment's approval → verify.
+#
+# Run it by hand with a target and a commit to redeploy one environment. That
+# is how a region is rolled back to a release that worked. A redeploy skips the
+# tests and the bake (the commit passed them when it first shipped) but still
+# waits at the environment's approval. CodeLens starts these runs from its
+# environment view and names them "Deploy <target> at <commit>".
+#
 # Until deploy/azure-setup.sh has set the AZURE_* variables the deploy jobs
 # are skipped, not failed.
 on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      target:
+        description: Where to deploy. "all" runs a full release.
+        type: choice
+        options: [all, staging, production-us, production-ca, production-eu]
+        default: all
+      ref:
+        description: Commit to deploy, as a full SHA. Empty means the head of the branch.
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -17,13 +35,20 @@ concurrency:
   group: deploy
   cancel-in-progress: false
 
+env:
+  # The commit this run ships: the one a redeploy names, or the branch head.
+  DEPLOY_SHA: ${{ inputs.ref || github.sha }}
+
 jobs:
   verify:
     name: Lint, typecheck and unit tests
+    if: github.event_name == 'push' || inputs.target == 'all'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -36,10 +61,13 @@ jobs:
   integration-tests:
     name: Integration tests
     needs: verify
+    if: github.event_name == 'push' || inputs.target == 'all'
     runs-on: ubuntu-latest
     timeout-minutes: 6
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -50,7 +78,7 @@ jobs:
   deploy-staging:
     name: Deploy staging
     needs: integration-tests
-    if: vars.AZURE_CLIENT_ID != ''
+    if: ${{ !failure() && !cancelled() && vars.AZURE_CLIENT_ID != '' && (github.event_name == 'push' || inputs.target == 'all' || inputs.target == 'staging') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:
@@ -58,8 +86,13 @@ jobs:
       url: ${{ steps.publish.outputs.url }}
     outputs:
       url: ${{ steps.publish.outputs.url }}
+      bake-minutes: ${{ steps.publish.outputs.bake-minutes }}
     steps:
+      - name: Check the commit to deploy
+        run: '[[ "$DEPLOY_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::ref must be a full commit SHA"; exit 1; }'
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -78,9 +111,31 @@ jobs:
           environment: staging
           storage-account: ${{ vars.STORAGE_STAGING }}
 
+  # Production gets a release only after it has run in staging for
+  # bakeMinutes (config/deploy/staging.json) without a failed health check.
+  bake:
+    name: Bake in staging
+    needs: deploy-staging
+    if: ${{ !failure() && !cancelled() && needs.deploy-staging.result == 'success' && (github.event_name == 'push' || inputs.target == 'all') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Watch staging before production gets this release
+        env:
+          URL: ${{ needs.deploy-staging.outputs.url }}
+          MINUTES: ${{ needs.deploy-staging.outputs.bake-minutes || '0' }}
+        run: node scripts/bake.ts "$URL" "$DEPLOY_SHA" "$MINUTES"
+
   deploy-us:
     name: Deploy production-us
-    needs: deploy-staging
+    needs: [deploy-staging, bake]
+    if: ${{ !failure() && !cancelled() && vars.AZURE_CLIENT_ID != '' && (github.event_name == 'push' || inputs.target == 'all' || inputs.target == 'production-us') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:
@@ -89,7 +144,11 @@ jobs:
     outputs:
       url: ${{ steps.publish.outputs.url }}
     steps:
+      - name: Check the commit to deploy
+        run: '[[ "$DEPLOY_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::ref must be a full commit SHA"; exit 1; }'
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -109,7 +168,8 @@ jobs:
 
   deploy-ca:
     name: Deploy production-ca
-    needs: deploy-staging
+    needs: [deploy-staging, bake]
+    if: ${{ !failure() && !cancelled() && vars.AZURE_CLIENT_ID != '' && (github.event_name == 'push' || inputs.target == 'all' || inputs.target == 'production-ca') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:
@@ -118,7 +178,11 @@ jobs:
     outputs:
       url: ${{ steps.publish.outputs.url }}
     steps:
+      - name: Check the commit to deploy
+        run: '[[ "$DEPLOY_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::ref must be a full commit SHA"; exit 1; }'
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -138,7 +202,8 @@ jobs:
 
   deploy-eu:
     name: Deploy production-eu
-    needs: deploy-staging
+    needs: [deploy-staging, bake]
+    if: ${{ !failure() && !cancelled() && vars.AZURE_CLIENT_ID != '' && (github.event_name == 'push' || inputs.target == 'all' || inputs.target == 'production-eu') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:
@@ -147,7 +212,11 @@ jobs:
     outputs:
       url: ${{ steps.publish.outputs.url }}
     steps:
+      - name: Check the commit to deploy
+        run: '[[ "$DEPLOY_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::ref must be a full commit SHA"; exit 1; }'
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -168,10 +237,13 @@ jobs:
   verify-production:
     name: Verify production
     needs: [deploy-us, deploy-ca, deploy-eu]
+    if: ${{ !failure() && !cancelled() && vars.AZURE_CLIENT_ID != '' && (github.event_name == 'push' || inputs.target == 'all') }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.DEPLOY_SHA }}
       - uses: actions/setup-node@v7
         with:
           node-version: 24
@@ -182,5 +254,5 @@ jobs:
           EU: ${{ needs.deploy-eu.outputs.url }}
         run: |
           for url in "$US" "$CA" "$EU"; do
-            npm run smoke -- "$url" "$GITHUB_SHA"
+            npm run smoke -- "$url" "$DEPLOY_SHA"
           done
