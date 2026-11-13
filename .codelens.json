@@ -1,5 +1,6 @@
 {
   "description": "Read by CodeLens to label deploy targets. Keys are GitHub environment names.",
+  "deployConfig": "config/deploy/{environment}.json",
   "environments": {
     "staging": {
       "tier": "staging",
